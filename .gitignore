@@ -52,12 +52,6 @@ Plugins/*/Binaries/*
 # Builds
 Build/*
 
-# Whitelist Source, Assets, Content, and Config folders
-!Source/
-!Assets/
-!Content/
-!Config/
-
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
 !Build/*/
 Build/*/**
@@ -78,3 +72,4 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+0 comments on commit cc162a3
