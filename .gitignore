@@ -52,6 +52,12 @@ Plugins/*/Binaries/*
 # Builds
 Build/*
 
+# Whitelist Source, Assets, Content, and Config folders
+!Source/
+!Assets/
+!Content/
+!Config/
+
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
 !Build/*/
 Build/*/**
