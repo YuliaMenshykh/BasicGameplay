@@ -11,10 +11,12 @@
 ABreakable::ABreakable()
 {
 	PrimaryActorTick.bCanEverTick = false;
+
 	GeometryCollection = CreateDefaultSubobject<UGeometryCollectionComponent>(TEXT("GeometryCollection"));
 	SetRootComponent(GeometryCollection);
 	GeometryCollection->SetGenerateOverlapEvents(true);
 	GeometryCollection->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GeometryCollection->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
 	GeometryCollection->SetNotifyBreaks(true);
 
@@ -50,7 +52,7 @@ void ABreakable::Tick(float DeltaTime)
 
 }
 
-void ABreakable::GetHit(const FVector& ImpactPoint)
+void ABreakable::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	if (bBroken)return;
 	bBroken = true;

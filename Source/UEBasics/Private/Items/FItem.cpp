@@ -5,8 +5,9 @@
 #include "DrawDebugHelpers.h"
 #include "Components/SphereComponent.h"
 #include <UEBasics/DebugMacros.h>
-#include "Character/SlashCharacter.h"
+#include "Interface/PickupInterface.h"
 #include "NiagaraComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AFItem::AFItem()
@@ -15,6 +16,8 @@ AFItem::AFItem()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
+	ItemMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RootComponent = ItemMesh; 
 
 
@@ -51,22 +54,34 @@ float AFItem::TransformedCos()
 
 void AFItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ASlashCharacter* SlashCharacter = Cast<ASlashCharacter>(OtherActor);
-	if (SlashCharacter)
+	IPickupInterface* PickupInterf = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterf)
 	{
-		SlashCharacter->SerOverlappingItem(this);
+		PickupInterf->SetOverlappingItem(this);
 	}
 	
 }
 
 void AFItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	ASlashCharacter* SlashCharacter = Cast<ASlashCharacter>(OtherActor);
-	if (SlashCharacter)
+	IPickupInterface* PickupInterf = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterf)
 	{
-		SlashCharacter->SerOverlappingItem(nullptr);
+		PickupInterf->SetOverlappingItem(nullptr);
 	}
 	
+}
+
+void AFItem::SpawnPickupSound()
+{
+	if (PickupSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			PickupSound,
+			GetActorLocation()
+		);
+	}
 }
 
 // Called every frame
@@ -77,7 +92,7 @@ void AFItem::Tick(float DeltaTime)
 	RunningTime += DeltaTime;
 	if (ItemState == EItemState::EIS_Hovering)
 	{
-		AddActorWorldOffset(FVector(0.f, TransformedSin(), 0.f));
+		AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
 	}
 	
 	

@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "InputActionValue.h"
-#include "GameFramework/Character.h"
+#include "BaseCharacter.h"
 #include "CharacterTypes.h"
+#include "Interface/PickupInterface.h"
 #include "SlashCharacter.generated.h"
 
 class USpringArmComponent;
@@ -15,24 +16,44 @@ class UInputMappingContext;
 class UGroomComponent;
 class AFItem;
 class UAnimMontage;
-class AWeapon;
+class ASoul;
+class ATreasure;
 
 UCLASS()
-class UEBASICS_API ASlashCharacter : public ACharacter
+class UEBASICS_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+
 	ASlashCharacter();
+	virtual void Tick(float DeltaTime)override;
+
+	/* <IHitInterface> */
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	/* <IHitInterface> */
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)override;
+	virtual void SetOverlappingItem(AFItem* Item)override;
+	virtual void AddSouls(ASoul* Soul)override;
+	virtual void AddGold(ATreasure* Gold)override;
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
 	/*
-	* Callbacks for input
+	* Callbacks for inputs
 	*/
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void Move(const FInputActionValue& Value);
+	void Looking(const FInputActionValue& Value);
+	virtual void Jump() override;
+	void EKey();
+	virtual void Attack()override;
+	void Dodge();
+
+	bool HasStamina();
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputMappingContext* SlashContext;
@@ -40,107 +61,87 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* MovementAction;
 
-	void Move(const FInputActionValue& Value);
-
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* LookingAction;
-
-	void Looking(const FInputActionValue& Value);
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* JumpAction;
 
-	virtual void Jump() override;
-
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* EKeyAction;
-
-	void EKey();
 
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* AttackAction;
 
-	void Attack();
-
 	UPROPERTY(EditAnywhere, Category = Input)
 	UInputAction* DodgeAction;
 
-	void Dodge();
-
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* HairMesh;
-
 	//
-	//Play montage functions
+	//Combat
 	//
-
-	void PlayAttackMontage();
-
-	UFUNCTION(BlueprintCallable)
-	void AttackEnd();
-
-	bool CanAttack();
-
-	void PlayEquipMontage(const FName& SectionName);
-
-	bool CanDisarm();
-
 	bool CanArm();
-
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeapon* EquipedWeapon;
-
-	UFUNCTION(BlueprintCallable)
-	void Disarm();
-
-	UFUNCTION(BlueprintCallable)
+	bool CanDisarm();
 	void Arm();
+	void Disarm();
+	virtual bool CanAttack()override;
+	void EquipWeapon(AWeapon* Weapon);
+	virtual void AttackEnd()override;
+	void PlayEquipMontage(const FName& SectionName);
+	virtual void Die_Implementation() override;
+
+	UFUNCTION(BlueprintCallable)
+	void DodgeEnd();
+	
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToBack();
+
+	UFUNCTION(BlueprintCallable)
+	void AttachWeaponToHand();
 
 	UFUNCTION(BlueprintCallable)
 	void FinishEquipping();
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	UFUNCTION(BlueprintCallable)
-	void SetWeaponColisionEnabled(ECollisionEnabled::Type CollisionEnabled);
-
-	//UFUNCTION(BlueprintCallable)
-	//void SetWeaponColisionDisabled(ECollisionEnabled::Type CollisionEnabled);
+	void EndReact();
 
 private:
 
-	ECharacterStates CharacterState = ECharacterStates::ECS_Unequipped;
+	void SetHUDHealth();
 
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	EActionState ActionState = EActionState::EAS_Unoccupied;
-
+	// Character components //
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArm;
 
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* ViewCamera;
 
+	UPROPERTY(VisibleAnywhere)
+	USkeletalMeshComponent* HairMesh;
+
 	UPROPERTY(VisibleInstanceOnly)
 	AFItem* OverlappingItem;
 
-	//
-	//Animation montages
-	//
-	UPROPERTY(EditDefaultsOnly, Category = Montages)
-	UAnimMontage* AttackMontage;
+	
+	ECharacterStates CharacterState = ECharacterStates::ECS_Unequipped;
 
+	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState = EActionState::EAS_Unoccupied;
+	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EquipMontage;
 
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DodgeMontage;
+
+	UPROPERTY()
+	class UPlayerOverlay* PlayerOverlay;
+
 public:
 
-	FORCEINLINE void SerOverlappingItem(AFItem* Item) { OverlappingItem = Item; }
+	//FORCEINLINE void SerOverlappingItem(AFItem* Item) { OverlappingItem = Item; }
 
 	FORCEINLINE ECharacterStates GetCharacterState() const { return CharacterState; }
 
+	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 };

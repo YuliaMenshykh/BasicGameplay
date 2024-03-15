@@ -36,4 +36,9 @@ public :
 	UPROPERTY(BlueprintReadOnly)
 	ECharacterStates CharacterState;
 
+	UPROPERTY(BlueprintReadOnly)
+	EActionState ActionState;
+
+	UPROPERTY(BlueprintReadOnly)
+	int SelectedDeathAnimaton;
 };

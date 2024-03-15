@@ -3,21 +3,15 @@
 
 #include "Items/Treasure.h"
 #include "Character/SlashCharacter.h"
-#include "Kismet/GameplayStatics.h"
+#include "Interface/PickupInterface.h"
 
 void ATreasure::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	ASlashCharacter* SlashCharacter = Cast<ASlashCharacter>(OtherActor);
-	if (SlashCharacter)
+	IPickupInterface* PickupInterf = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterf)
 	{
-		if (PickupSound)
-		{
-			UGameplayStatics::PlaySoundAtLocation(
-			this,
-			PickupSound,
-			GetActorLocation()
-			);
-		}
+		PickupInterf->AddGold(this);
+		SpawnPickupSound();
 		Destroy();
 	}
 }
