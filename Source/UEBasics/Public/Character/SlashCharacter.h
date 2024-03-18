@@ -121,10 +121,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AFItem* OverlappingItem;
 
-	
+	UPROPERTY(VisibleAnywhere)
 	ECharacterStates CharacterState = ECharacterStates::ECS_Unequipped;
 
-	UPROPERTY(VisibleAnywhere)
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 	
